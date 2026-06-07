@@ -15,7 +15,7 @@ async function runFullEvaluation() {
   for (const card of SEED_DEBATE_DATASET) {
     console.log(`Evaluating ${card.id}...`);
     try {
-      const hints = extractSourceHints(card.evidenceText);
+      const hints = extractSourceHints(card.evidenceText || '');
       const payload = {
         claimText: card.claimText,
         evidenceText: hints.cleanEvidenceText,

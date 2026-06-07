@@ -16,7 +16,8 @@ create table if not exists analyses (
   id uuid primary key default gen_random_uuid(),
   user_id uuid null, -- references auth.users(id) dynamically via RLS
   claim_text text not null,
-  evidence_text text not null,
+  evidence_text text null,
+  source_url text null,
   
   -- Parsed source metadata / hints
   source_title text null,

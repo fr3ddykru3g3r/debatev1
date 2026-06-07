@@ -3,7 +3,8 @@ export type ConfidenceLevel = 'low' | 'medium' | 'high';
 
 export interface AnalysisRequest {
   claimText: string;
-  evidenceText: string;
+  evidenceText?: string;
+  sourceUrl?: string;
   sourceTitle?: string;
   authorName?: string;
   publicationName?: string;
@@ -39,7 +40,8 @@ export interface AnalysisRecord {
   id: string;
   user_id: string | null;
   claim_text: string;
-  evidence_text: string;
+  evidence_text: string | null;
+  source_url: string | null;
   source_title: string | null;
   author_name: string | null;
   publication_name: string | null;

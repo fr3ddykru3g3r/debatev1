@@ -21,7 +21,7 @@ const openai = isModelConfigured
 // Mock analysis function for cost-free demo/testing and fallback states
 export function generateMockAnalysis(request: AnalysisRequest): AnalysisModelOutput {
   const claim = request.claimText.toLowerCase();
-  const evidence = request.evidenceText.toLowerCase();
+  const evidence = (request.evidenceText || request.sourceUrl || '').toLowerCase();
 
   if (claim.includes('carbon') || evidence.includes('oecd') || evidence.includes('carbon')) {
     return {
@@ -71,8 +71,9 @@ export function generateMockAnalysis(request: AnalysisRequest): AnalysisModelOut
     };
   }
 
-  const hasYear = /\b(19|20)\d{2}\b/.test(request.evidenceText);
-  const wordCount = request.evidenceText.split(/\s+/).length;
+  const rawEvidence = request.evidenceText || request.sourceUrl || '';
+  const hasYear = /\b(19|20)\d{2}\b/.test(rawEvidence);
+  const wordCount = rawEvidence.split(/\s+/).length;
   const isShort = wordCount < 40;
 
   return {
@@ -117,7 +118,7 @@ export async function callModel(request: AnalysisRequest): Promise<AnalysisModel
   // Format prompt
   let prompt = EVALUATION_PROMPT_TEMPLATE
     .replace('{claimText}', request.claimText)
-    .replace('{evidenceText}', request.evidenceText)
+    .replace('{evidenceText}', request.evidenceText || '')
     .replace('{sourceTitle}', request.sourceTitle || 'Not provided')
     .replace('{authorName}', request.authorName || 'Not provided')
     .replace('{publicationName}', request.publicationName || 'Not provided')

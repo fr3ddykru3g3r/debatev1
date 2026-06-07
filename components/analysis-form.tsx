@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, ShieldAlert, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, ShieldAlert, Sparkles, Link2, FileText } from 'lucide-react';
 import { AnalysisRequest } from '@/types/analysis';
 
 interface AnalysisFormProps {
@@ -12,6 +12,8 @@ interface AnalysisFormProps {
 export function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps) {
   const [claimText, setClaimText] = useState('');
   const [evidenceText, setEvidenceText] = useState('');
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [inputMode, setInputMode] = useState<'text' | 'url'>('text');
   
   // Optional metadata inputs
   const [showMetadata, setShowMetadata] = useState(false);
@@ -31,14 +33,30 @@ export function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps) {
       setError('Please enter a claim tag.');
       return;
     }
-    if (!evidenceText.trim()) {
+
+    if (inputMode === 'text' && !evidenceText.trim()) {
       setError('Please paste the evidence text.');
       return;
     }
 
+    if (inputMode === 'url' && !sourceUrl.trim()) {
+      setError('Please enter a source URL.');
+      return;
+    }
+
+    if (inputMode === 'url') {
+      try {
+        new URL(sourceUrl.trim());
+      } catch (err) {
+        setError('Please enter a valid URL (including http:// or https://).');
+        return;
+      }
+    }
+
     const payload: AnalysisRequest = {
       claimText: claimText.trim(),
-      evidenceText: evidenceText.trim(),
+      evidenceText: inputMode === 'text' ? evidenceText.trim() : undefined,
+      sourceUrl: inputMode === 'url' ? sourceUrl.trim() : undefined,
       sourceTitle: sourceTitle.trim() || undefined,
       authorName: authorName.trim() || undefined,
       publicationName: publicationName.trim() || undefined,
@@ -51,6 +69,7 @@ export function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps) {
 
   const handleFillSample = (sampleNum: number) => {
     setError('');
+    setInputMode('text');
     if (sampleNum === 1) {
       setClaimText('Carbon border adjustments reduce carbon leakage in the medium term.');
       setEvidenceText(
@@ -137,22 +156,67 @@ export function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps) {
         />
       </div>
 
-      {/* Evidence Area */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-xs font-medium text-zinc-400">
-          <label htmlFor="evidenceText">Evidence Text (Card Body)</label>
-          <span className="font-mono">{evidenceText.length}/8000</span>
-        </div>
-        <textarea
-          id="evidenceText"
-          rows={6}
-          value={evidenceText}
-          onChange={(e) => setEvidenceText(e.target.value.substring(0, 8000))}
-          placeholder="Paste the evidence card here. (You can include a citation header at the top - CutBase will attempt to extract author and date automatically)..."
-          className="w-full bg-zinc-900 border border-[var(--border)] rounded p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring)] text-zinc-200 placeholder-zinc-600 font-serif"
-          disabled={isLoading}
-        />
+      {/* Input Mode Selector */}
+      <div className="flex rounded-md border border-[var(--border)] bg-zinc-900/40 p-0.5 text-xs font-mono">
+        <button
+          type="button"
+          onClick={() => { setInputMode('text'); setError(''); }}
+          className={`flex flex-1 items-center justify-center gap-1.5 py-1.5 rounded transition-all cursor-pointer ${inputMode === 'text' ? 'bg-zinc-800 text-zinc-200 font-bold' : 'text-zinc-500 hover:text-zinc-400'}`}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          Paste Evidence Text
+        </button>
+        <button
+          type="button"
+          onClick={() => { setInputMode('url'); setError(''); }}
+          className={`flex flex-1 items-center justify-center gap-1.5 py-1.5 rounded transition-all cursor-pointer ${inputMode === 'url' ? 'bg-zinc-800 text-zinc-200 font-bold' : 'text-zinc-500 hover:text-zinc-400'}`}
+        >
+          <Link2 className="h-3.5 w-3.5" />
+          Direct Web Link (URL)
+        </button>
       </div>
+
+      {/* Evidence Area (Text Mode) */}
+      {inputMode === 'text' && (
+        <div className="space-y-1.5 animate-fade-in">
+          <div className="flex justify-between text-xs font-medium text-zinc-400">
+            <label htmlFor="evidenceText">Evidence Text (Card Body)</label>
+            <span className="font-mono">{evidenceText.length}/8000</span>
+          </div>
+          <textarea
+            id="evidenceText"
+            rows={6}
+            value={evidenceText}
+            onChange={(e) => setEvidenceText(e.target.value.substring(0, 8000))}
+            placeholder="Paste the evidence card here. (You can include a citation header at the top - CutBase will attempt to extract author and date automatically)..."
+            className="w-full bg-zinc-900 border border-[var(--border)] rounded p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring)] text-zinc-200 placeholder-zinc-600 font-serif"
+            disabled={isLoading}
+          />
+        </div>
+      )}
+
+      {/* URL Input Area (URL Mode) */}
+      {inputMode === 'url' && (
+        <div className="space-y-1.5 animate-fade-in">
+          <label htmlFor="sourceUrl" className="block text-xs font-medium text-zinc-400">Source Web Link URL</label>
+          <div className="relative">
+            <input
+              id="sourceUrl"
+              type="text"
+              value={sourceUrl}
+              onChange={(e) => setSourceUrl(e.target.value)}
+              placeholder="e.g. https://www.oecd.org/newsroom/carbon-border-adjustments.htm"
+              className="w-full bg-zinc-900 border border-[var(--border)] rounded p-2.5 pl-9 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring)] text-zinc-200 placeholder-zinc-600"
+              disabled={isLoading}
+            />
+            <Link2 className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
+          </div>
+          <span className="text-[10px] text-zinc-500 block leading-relaxed font-sans">
+            * CutBase will read the target webpage server-side, strip HTML tags, clean script scripts, and evaluate the underlying text content.
+          </span>
+        </div>
+      )}
+
 
       {/* Optional Metadata Accordion */}
       <div className="border-t border-[var(--border)] pt-2">

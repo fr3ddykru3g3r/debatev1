@@ -83,3 +83,44 @@ export function extractSourceHints(evidenceText: string): ParsedSourceHints {
     cleanEvidenceText: cleanEvidenceText || evidenceText,
   };
 }
+
+export function cleanHtmlToText(html: string): string {
+  // Replace script and style tags and their contents
+  let text = html.replace(/<(script|style)\b[^>]*>([\s\S]*?)<\/\1>/gi, '');
+  // Replace all other HTML tags
+  text = text.replace(/<[^>]+>/g, ' ');
+  // Decode common HTML entities
+  text = text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+  // Normalize whitespaces
+  text = text.replace(/\s+/g, ' ').trim();
+  // Limit to 8000 characters
+  return text.substring(0, 8000);
+}
+
+export async function fetchUrlText(url: string): Promise<{ text: string; title?: string }> {
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch web page: ${response.statusText} (${response.status})`);
+  }
+
+  const html = await response.text();
+  
+  // Try to parse the title
+  const titleMatch = html.match(/<title>([\s\S]*?)<\/title>/i);
+  const title = titleMatch ? titleMatch[1].trim() : undefined;
+
+  const text = cleanHtmlToText(html);
+  return { text, title };
+}
+

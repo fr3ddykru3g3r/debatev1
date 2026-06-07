@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AnalysisRequestSchema } from '@/lib/validation';
-import { extractSourceHints } from '@/lib/parser';
+import { extractSourceHints, fetchUrlText } from '@/lib/parser';
 import { callModel } from '@/lib/model';
 import { computeOverallScore } from '@/lib/scoring';
 import { db } from '@/lib/supabase';
@@ -12,11 +12,29 @@ export async function POST(req: NextRequest) {
     // Validate request
     const validated = AnalysisRequestSchema.parse(body);
 
+    let finalEvidenceText = validated.evidenceText || '';
+    let fetchedTitle: string | undefined;
+
+    if (validated.sourceUrl && !finalEvidenceText.trim()) {
+      try {
+        const { text, title } = await fetchUrlText(validated.sourceUrl);
+        finalEvidenceText = text;
+        fetchedTitle = title;
+      } catch (err: any) {
+        console.error('URL Fetch Error:', err);
+        return NextResponse.json({ error: `Could not fetch or read source URL: ${err.message}` }, { status: 400 });
+      }
+    }
+
+    if (!finalEvidenceText.trim()) {
+      return NextResponse.json({ error: 'Evidence text or a reachable web source URL is required' }, { status: 400 });
+    }
+
     // Extract hints using citation parser
-    const hints = extractSourceHints(validated.evidenceText);
+    const hints = extractSourceHints(finalEvidenceText);
 
     // Prefer user input, fall back to parsed hints
-    const sourceTitle = validated.sourceTitle || hints.title || null;
+    const sourceTitle = validated.sourceTitle || fetchedTitle || hints.title || null;
     const authorName = validated.authorName || hints.author || null;
     const publicationName = validated.publicationName || hints.publication || null;
     const publishedAt = validated.publishedAt || (hints.year ? `${hints.year}-01-01` : null);
@@ -55,7 +73,8 @@ export async function POST(req: NextRequest) {
     const record = await db.createAnalysis({
       user_id: userId,
       claim_text: validated.claimText,
-      evidence_text: validated.evidenceText,
+      evidence_text: finalEvidenceText,
+      source_url: validated.sourceUrl || null,
       source_title: sourceTitle,
       author_name: authorName,
       publication_name: publicationName,

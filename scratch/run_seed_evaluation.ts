@@ -17,7 +17,7 @@ async function runEvaluation() {
     console.log(`Notes: ${card.notes}`);
     
     try {
-      const hints = extractSourceHints(card.evidenceText);
+      const hints = extractSourceHints(card.evidenceText || '');
       const payload = {
         claimText: card.claimText,
         evidenceText: hints.cleanEvidenceText,

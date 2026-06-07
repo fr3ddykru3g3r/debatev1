@@ -200,7 +200,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       </div>
 
       {/* Collapsible Original Evidence */}
-      <CollapsibleEvidence text={result.evidence_text} />
+      <CollapsibleEvidence text={result.evidence_text || ''} sourceUrl={result.source_url} />
 
       {/* Authoritative Academic Sources */}
       <SuggestedSources query={result.suggested_tag} />
@@ -211,7 +211,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
   );
 }
 
-function CollapsibleEvidence({ text }: { text: string }) {
+function CollapsibleEvidence({ text, sourceUrl }: { text: string; sourceUrl?: string | null }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-4 text-xs text-left">
@@ -219,13 +219,24 @@ function CollapsibleEvidence({ text }: { text: string }) {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full font-mono text-[var(--muted-foreground)] hover:text-zinc-200 select-none cursor-pointer"
       >
-        <span>[VIEW ORIGINAL EVIDENCE TEXT]</span>
+        <span>{sourceUrl ? '[VIEW EXTRACTED WEB CONTENT]' : '[VIEW ORIGINAL EVIDENCE TEXT]'}</span>
         <span>{isOpen ? '[-]' : '[+]'}</span>
       </button>
       {isOpen && (
-        <p className="mt-3 text-zinc-300 font-serif whitespace-pre-wrap leading-relaxed border-t border-zinc-900 pt-3">
-          {text}
-        </p>
+        <div className="mt-3 border-t border-zinc-900 pt-3 space-y-2">
+          {sourceUrl && (
+            <div className="flex items-center gap-1.5 font-mono text-[10px] text-zinc-500 mb-2">
+              <ExternalLink className="h-3 w-3 text-zinc-500" />
+              <span>Source Link:</span>
+              <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-zinc-200 underline truncate max-w-md">
+                {sourceUrl}
+              </a>
+            </div>
+          )}
+          <p className="text-zinc-300 font-serif whitespace-pre-wrap leading-relaxed">
+            {text || 'No text extracted.'}
+          </p>
+        </div>
       )}
     </div>
   );
