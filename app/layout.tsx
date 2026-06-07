@@ -50,13 +50,6 @@ export default function RootLayout({
                   Analytics
                 </Link>
               </nav>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <span className="text-[10px] font-mono text-[var(--muted-foreground)] uppercase">
-                Prototype Active
-              </span>
-            </div>
           </div>
         </header>
 
