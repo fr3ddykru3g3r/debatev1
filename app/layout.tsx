@@ -40,6 +40,9 @@ export default function RootLayout({
                 <Link href="/" className="hover:text-[var(--foreground)] text-[var(--muted-foreground)] transition-colors">
                   Analyze
                 </Link>
+                <Link href="/sources" className="hover:text-[var(--foreground)] text-[var(--muted-foreground)] transition-colors">
+                  Sources
+                </Link>
                 <Link href="/history" className="hover:text-[var(--foreground)] text-[var(--muted-foreground)] transition-colors">
                   History
                 </Link>

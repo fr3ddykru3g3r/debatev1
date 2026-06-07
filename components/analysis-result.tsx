@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Award, Copy, Check, Info, AlertTriangle, Lightbulb, Bookmark, BookOpen, ExternalLink } from 'lucide-react';
+import { Award, Copy, Check, Info, AlertTriangle, Lightbulb, Bookmark, BookOpen, ExternalLink, Search } from 'lucide-react';
 import { ScoreRow } from './score-row';
 import { VerdictChip } from './verdict-chip';
 import { AnalysisRecord } from '@/types/analysis';
@@ -319,36 +319,67 @@ function FeedbackPanel({ analysisId, initiallyFlagged }: { analysisId: string; i
 function SuggestedSources({ query }: { query: string }) {
   const [sources, setSources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchVal, setSearchVal] = useState(query);
+
+  const fetchSources = async (searchQuery: string) => {
+    if (!searchQuery.trim()) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/suggest-sources?query=${encodeURIComponent(searchQuery)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSources(data);
+      }
+    } catch (err) {
+      console.error('Error fetching academic sources:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSources = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/suggest-sources?query=${encodeURIComponent(query)}`);
-        if (response.ok) {
-          const data = await response.json();
-          setSources(data);
-        }
-      } catch (err) {
-        console.error('Error fetching academic sources:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSources();
+    setSearchVal(query);
+    fetchSources(query);
   }, [query]);
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchSources(searchVal);
+  };
+
   return (
-    <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-5 space-y-3 text-xs text-left">
-      <div className="flex items-center gap-2 font-mono text-[var(--muted-foreground)] border-b border-zinc-900/40 pb-2">
-        <BookOpen className="h-4 w-4 text-emerald-500" />
-        <span>[AUTHORITATIVE ACADEMIC BACKUP SOURCES]</span>
+    <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-5 space-y-4 text-xs text-left">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-900/40 pb-3">
+        <div className="flex items-center gap-2 font-mono text-[var(--muted-foreground)]">
+          <BookOpen className="h-4 w-4 text-emerald-500" />
+          <span>[AUTHORITATIVE ACADEMIC BACKUP SOURCES]</span>
+        </div>
       </div>
+
+      {/* Interactive Search Bar */}
+      <form onSubmit={handleSearchSubmit} className="flex gap-2">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={searchVal}
+            onChange={(e) => setSearchVal(e.target.value)}
+            placeholder="Search OpenAlex for backing literature..."
+            className="w-full bg-zinc-900/50 border border-[var(--border)] rounded px-3 py-1.5 pl-8 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-[var(--ring)]"
+          />
+          <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-zinc-500" />
+        </div>
+        <button
+          type="submit"
+          className="px-3 py-1.5 bg-zinc-900 border border-[var(--border)] hover:bg-zinc-800 text-zinc-300 font-mono text-xs rounded transition-colors cursor-pointer select-none"
+        >
+          Search
+        </button>
+      </form>
 
       {loading ? (
         <p className="text-zinc-500 font-mono italic animate-pulse">Searching OpenAlex database for supporting literature...</p>
       ) : sources.length === 0 ? (
-        <p className="text-zinc-500 font-mono italic">No supporting academic papers found for this claim.</p>
+        <p className="text-zinc-500 font-mono italic">No supporting academic papers found for this query.</p>
       ) : (
         <div className="space-y-3.5 pt-1">
           {sources.map((src, idx) => (
