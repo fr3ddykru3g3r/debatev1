@@ -72,7 +72,7 @@ export default function SourcesPage() {
       </div>
 
       {/* Search Bar Panel */}
-      <div className="bg-zinc-950/40 p-6 rounded-lg border border-[var(--border)] space-y-4">
+      <div className="glass-card p-6 rounded-lg space-y-4">
         <form onSubmit={handleSubmit} className="flex gap-3">
           <div className="relative flex-1">
             <input
@@ -88,7 +88,7 @@ export default function SourcesPage() {
           <button
             type="submit"
             disabled={loading || !query.trim()}
-            className="px-5 py-2.5 bg-zinc-100 hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-mono font-bold text-xs tracking-wider uppercase rounded transition-colors flex items-center gap-2 cursor-pointer select-none"
+            className="px-5 py-2.5 bg-zinc-100 hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-mono font-bold text-xs tracking-wider uppercase rounded transition-colors flex items-center gap-2 cursor-pointer select-none interactive-action"
           >
             {loading ? 'Searching...' : 'Find Evidence'}
           </button>
@@ -166,9 +166,9 @@ export default function SourcesPage() {
             <span className="text-xs font-mono font-bold text-zinc-400 uppercase block pl-1">
               // TOP SCHOLARLY SEARCH RESULTS
             </span>
-            <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg divide-y divide-zinc-900/50">
+            <div className="glass-card rounded-lg divide-y divide-zinc-900/50">
               {sources.map((src, idx) => (
-                <div key={idx} className="p-5 space-y-2 group hover:bg-zinc-950/40 transition-colors">
+                <div key={idx} className="p-5 space-y-2 group hover:bg-zinc-950/20 transition-colors">
                   <div className="flex justify-between items-start gap-4">
                     <a
                       href={src.url}

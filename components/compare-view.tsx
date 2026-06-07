@@ -54,8 +54,8 @@ export function CompareView({ analysisA, analysisB, winnerId, summary }: Compare
       {/* Cards Header Side-by-Side */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Card A */}
-        <div className={`p-5 rounded-lg border bg-zinc-950/20 relative ${
-          winnerId === analysisA.id ? 'border-emerald-700 bg-emerald-950/5' : 'border-[var(--border)]'
+        <div className={`glass-card p-5 rounded-lg relative ${
+          winnerId === analysisA.id ? 'border-emerald-700 bg-emerald-950/5' : ''
         }`}>
           {winnerId === analysisA.id && (
             <span className="absolute -top-3 left-4 inline-flex items-center gap-1 bg-emerald-700 text-emerald-100 font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
@@ -72,8 +72,8 @@ export function CompareView({ analysisA, analysisB, winnerId, summary }: Compare
         </div>
 
         {/* Card B */}
-        <div className={`p-5 rounded-lg border bg-zinc-950/20 relative ${
-          winnerId === analysisB.id ? 'border-emerald-700 bg-emerald-950/5' : 'border-[var(--border)]'
+        <div className={`glass-card p-5 rounded-lg relative ${
+          winnerId === analysisB.id ? 'border-emerald-700 bg-emerald-950/5' : ''
         }`}>
           {winnerId === analysisB.id && (
             <span className="absolute -top-3 left-4 inline-flex items-center gap-1 bg-emerald-700 text-emerald-100 font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
@@ -91,7 +91,7 @@ export function CompareView({ analysisA, analysisB, winnerId, summary }: Compare
       </div>
 
       {/* Comparison summary card */}
-      <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-5 space-y-3">
+      <div className="glass-card rounded-lg p-5 space-y-3">
         <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
           <ArrowRightLeft className="h-4 w-4 text-zinc-400" />
           <span>[DECISION LOGIC COMPARISON SUMMARY]</span>
@@ -102,7 +102,7 @@ export function CompareView({ analysisA, analysisB, winnerId, summary }: Compare
       </div>
 
       {/* Structured Rubric Table */}
-      <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-5">
+      <div className="glass-card rounded-lg p-5">
         <h4 className="text-xs font-mono font-bold tracking-tight text-zinc-300 uppercase pb-2 border-b border-[var(--border)]">
           // ALIGNED RUBRIC COMPARISON
         </h4>

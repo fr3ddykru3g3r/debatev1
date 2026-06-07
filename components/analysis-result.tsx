@@ -33,13 +33,16 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
   // Score color formatting
   let scoreColor = 'text-red-400';
   let scoreBg = 'border-red-900/50 bg-red-950/20';
+  let glowClass = 'glow-red';
   
   if (result.overall_score >= 7.5) {
     scoreColor = 'text-emerald-400';
     scoreBg = 'border-emerald-900/50 bg-emerald-950/20';
+    glowClass = 'glow-emerald';
   } else if (result.overall_score >= 5.0) {
     scoreColor = 'text-amber-400';
     scoreBg = 'border-amber-900/50 bg-amber-950/20';
+    glowClass = 'glow-amber';
   }
 
   const citationYear = result.published_at ? new Date(result.published_at).getFullYear() : 'N/A';
@@ -49,10 +52,10 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
   const logicalFit = ((Number(result.claim_fit) * 30) + (Number(result.specificity) * 15) + (Number(result.quote_integrity) * 15)) / 60;
 
   return (
-    <div className="space-y-6 text-left">
+    <div className="space-y-6 text-left animate-fade-in">
       {/* Overview Card */}
-      <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
+      <div className={`glass-card rounded-lg p-5 ${glowClass}`}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-900/60">
           <div className="space-y-1">
             <span className="text-[10px] font-mono text-[var(--muted-foreground)] uppercase">
               // EVALUATED CARD: {citationDisplay}
@@ -108,7 +111,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       </div>
 
       {/* Suggested Debate Tag Repair */}
-      <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-5 space-y-3">
+      <div className="glass-card rounded-lg p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-mono text-[var(--muted-foreground)]">
             <Lightbulb className="h-4 w-4 text-yellow-500" />
@@ -117,7 +120,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
           <div className="flex gap-2">
             <button
               onClick={handleCopyTag}
-              className="flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 px-2 py-1 rounded transition-colors cursor-pointer select-none"
+              className="flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 px-2 py-1 rounded transition-colors cursor-pointer select-none interactive-action"
             >
               {copied ? (
                 <>
@@ -133,7 +136,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
             </button>
             <button
               onClick={handleCopyAll}
-              className="flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 px-2 py-1 rounded transition-colors cursor-pointer select-none"
+              className="flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 px-2 py-1 rounded transition-colors cursor-pointer select-none interactive-action"
             >
               {copiedAll ? (
                 <>
@@ -155,7 +158,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       </div>
 
       {/* Structured Rubric Scores */}
-      <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-5">
+      <div className="glass-card rounded-lg p-5">
         <h4 className="text-xs font-mono font-bold tracking-tight text-zinc-300 uppercase pb-2 border-b border-[var(--border)]">
           // RUBRIC METRICS BREAKDOWN
         </h4>
@@ -189,7 +192,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       </div>
 
       {/* Suggested Best Use */}
-      <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-4 flex items-center justify-between text-xs">
+      <div className="glass-card rounded-lg p-4 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
           <Bookmark className="h-4 w-4 text-zinc-400" />
           <span className="font-mono text-[var(--muted-foreground)]">RECOMMENDED BEST USE CASE:</span>
@@ -214,7 +217,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
 function CollapsibleEvidence({ text, sourceUrl }: { text: string; sourceUrl?: string | null }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-4 text-xs text-left">
+    <div className="glass-card rounded-lg p-4 text-xs text-left">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full font-mono text-[var(--muted-foreground)] hover:text-zinc-200 select-none cursor-pointer"
@@ -281,13 +284,13 @@ function FeedbackPanel({ analysisId, initiallyFlagged }: { analysisId: string; i
   }
 
   return (
-    <div className="bg-zinc-950/10 border border-[var(--border)] rounded-lg p-4 space-y-3">
+    <div className="glass-card p-4 space-y-3">
       {!showInput ? (
         <div className="flex justify-between items-center text-xs font-mono">
           <span className="text-zinc-500">Disagree with this evaluation result?</span>
           <button
             onClick={() => setShowInput(true)}
-            className="text-[11px] text-zinc-400 hover:text-amber-400 border border-zinc-800 hover:border-amber-900/50 px-2.5 py-1 rounded cursor-pointer transition-colors"
+            className="text-[11px] text-zinc-400 hover:text-amber-400 border border-zinc-800 hover:border-amber-900/50 px-2.5 py-1 rounded cursor-pointer transition-colors interactive-action"
           >
             Flag Incorrect Assessment
           </button>
@@ -359,7 +362,7 @@ function SuggestedSources({ query }: { query: string }) {
   };
 
   return (
-    <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-5 space-y-4 text-xs text-left">
+    <div className="glass-card rounded-lg p-5 space-y-4 text-xs text-left">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-900/40 pb-3">
         <div className="flex items-center gap-2 font-mono text-[var(--muted-foreground)]">
           <BookOpen className="h-4 w-4 text-emerald-500" />
@@ -381,7 +384,7 @@ function SuggestedSources({ query }: { query: string }) {
         </div>
         <button
           type="submit"
-          className="px-3 py-1.5 bg-zinc-900 border border-[var(--border)] hover:bg-zinc-800 text-zinc-300 font-mono text-xs rounded transition-colors cursor-pointer select-none"
+          className="px-3 py-1.5 bg-zinc-900 border border-[var(--border)] hover:bg-zinc-800 text-zinc-300 font-mono text-xs rounded transition-colors cursor-pointer select-none interactive-action"
         >
           Search
         </button>

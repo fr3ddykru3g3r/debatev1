@@ -104,7 +104,7 @@ export function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 bg-zinc-950/40 p-5 rounded-lg border border-[var(--border)] text-left">
+    <form onSubmit={handleSubmit} className="space-y-5 glass-card p-5 rounded-lg text-left">
       <div className="flex justify-between items-center pb-2 border-b border-[var(--border)]">
         <h2 className="text-sm font-mono font-bold tracking-tight text-zinc-300 uppercase">// EVIDENCE INPUT</h2>
         <div className="flex gap-2">
@@ -300,7 +300,7 @@ export function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps) {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-2.5 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 disabled:bg-zinc-800 disabled:text-zinc-600 transition-colors font-mono font-bold text-xs tracking-wider uppercase rounded flex items-center justify-center gap-2 cursor-pointer select-none"
+        className="w-full py-2.5 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 disabled:bg-zinc-800 disabled:text-zinc-600 transition-colors font-mono font-bold text-xs tracking-wider uppercase rounded flex items-center justify-center gap-2 cursor-pointer select-none interactive-action"
       >
         <Sparkles className="h-3.5 w-3.5" />
         {isLoading ? 'Running Argument-Quality Pipeline...' : 'Evaluate Evidence Quality'}
