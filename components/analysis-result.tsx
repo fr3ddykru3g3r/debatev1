@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Award, Copy, Check, Info, AlertTriangle, Lightbulb, Bookmark } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Award, Copy, Check, Info, AlertTriangle, Lightbulb, Bookmark, BookOpen, ExternalLink } from 'lucide-react';
 import { ScoreRow } from './score-row';
 import { VerdictChip } from './verdict-chip';
 import { AnalysisRecord } from '@/types/analysis';
@@ -202,6 +202,9 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       {/* Collapsible Original Evidence */}
       <CollapsibleEvidence text={result.evidence_text} />
 
+      {/* Authoritative Academic Sources */}
+      <SuggestedSources query={result.suggested_tag} />
+
       {/* Disagreement / QA Flag Capture */}
       <FeedbackPanel analysisId={result.id} initiallyFlagged={result.flagged || false} />
     </div>
@@ -308,6 +311,65 @@ function FeedbackPanel({ analysisId, initiallyFlagged }: { analysisId: string; i
             </button>
           </div>
         </form>
+      )}
+    </div>
+  );
+}
+
+function SuggestedSources({ query }: { query: string }) {
+  const [sources, setSources] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSources = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/suggest-sources?query=${encodeURIComponent(query)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setSources(data);
+        }
+      } catch (err) {
+        console.error('Error fetching academic sources:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSources();
+  }, [query]);
+
+  return (
+    <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-5 space-y-3 text-xs text-left">
+      <div className="flex items-center gap-2 font-mono text-[var(--muted-foreground)] border-b border-zinc-900/40 pb-2">
+        <BookOpen className="h-4 w-4 text-emerald-500" />
+        <span>[AUTHORITATIVE ACADEMIC BACKUP SOURCES]</span>
+      </div>
+
+      {loading ? (
+        <p className="text-zinc-500 font-mono italic animate-pulse">Searching OpenAlex database for supporting literature...</p>
+      ) : sources.length === 0 ? (
+        <p className="text-zinc-500 font-mono italic">No supporting academic papers found for this claim.</p>
+      ) : (
+        <div className="space-y-3.5 pt-1">
+          {sources.map((src, idx) => (
+            <div key={idx} className="space-y-1 group">
+              <a 
+                href={src.url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="font-medium text-zinc-100 hover:text-zinc-300 flex items-start gap-1 font-sans leading-relaxed"
+              >
+                {src.title}
+                <ExternalLink className="h-3 w-3 shrink-0 mt-0.5 opacity-40 group-hover:opacity-100 transition-opacity" />
+              </a>
+              <div className="flex flex-wrap items-center gap-2 text-[10px] text-zinc-500 font-mono">
+                <span>By {src.author}</span>
+                <span>•</span>
+                <span>{src.journal} ({src.year})</span>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
