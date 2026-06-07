@@ -199,8 +199,31 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
         </span>
       </div>
 
+      {/* Collapsible Original Evidence */}
+      <CollapsibleEvidence text={result.evidence_text} />
+
       {/* Disagreement / QA Flag Capture */}
       <FeedbackPanel analysisId={result.id} initiallyFlagged={result.flagged || false} />
+    </div>
+  );
+}
+
+function CollapsibleEvidence({ text }: { text: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="bg-zinc-950/20 border border-[var(--border)] rounded-lg p-4 text-xs text-left">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full font-mono text-[var(--muted-foreground)] hover:text-zinc-200 select-none cursor-pointer"
+      >
+        <span>[VIEW ORIGINAL EVIDENCE TEXT]</span>
+        <span>{isOpen ? '[-]' : '[+]'}</span>
+      </button>
+      {isOpen && (
+        <p className="mt-3 text-zinc-300 font-serif whitespace-pre-wrap leading-relaxed border-t border-zinc-900 pt-3">
+          {text}
+        </p>
+      )}
     </div>
   );
 }

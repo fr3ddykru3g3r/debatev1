@@ -149,7 +149,7 @@ export function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps) {
           value={evidenceText}
           onChange={(e) => setEvidenceText(e.target.value.substring(0, 8000))}
           placeholder="Paste the evidence card here. (You can include a citation header at the top - CutBase will attempt to extract author and date automatically)..."
-          className="w-full bg-zinc-900 border border-[var(--border)] rounded p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring)] text-zinc-200 placeholder-zinc-600 font-sans"
+          className="w-full bg-zinc-900 border border-[var(--border)] rounded p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring)] text-zinc-200 placeholder-zinc-600 font-serif"
           disabled={isLoading}
         />
       </div>
