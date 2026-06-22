@@ -13,6 +13,7 @@ interface AnalysisResultProps {
 export function AnalysisResult({ result }: AnalysisResultProps) {
   const [copied, setCopied] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
+  const [copiedVerbatim, setCopiedVerbatim] = useState(false);
 
   const handleCopyTag = () => {
     navigator.clipboard.writeText(result.suggested_tag);
@@ -27,6 +28,43 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
     navigator.clipboard.writeText(formatted);
     setCopiedAll(true);
     setTimeout(() => setCopiedAll(false), 2000);
+  };
+
+  const handleCopyVerbatim = async () => {
+    const citationYear = result.published_at ? new Date(result.published_at).getFullYear() : 'N/A';
+    const authorLast = result.author_name ? result.author_name.split(',')[0].trim() : 'Unknown';
+    const citationDisplay = `${result.author_name || 'Unknown Author'} (${citationYear}) "${result.source_title || 'Web Document'}" ${result.publication_name || ''}`;
+
+    const html = `
+      <p style="font-family: Arial, sans-serif; font-size: 14pt; font-weight: bold; margin-bottom: 2px;">
+        ${result.suggested_tag}
+      </p>
+      <p style="font-family: Arial, sans-serif; font-size: 10pt; color: #555555; margin-bottom: 8px;">
+        <strong>${authorLast} ${citationYear}</strong> (${citationDisplay})
+      </p>
+      <p style="font-family: Georgia, serif; font-size: 11pt; line-height: 1.4; color: #000000;">
+        ${result.evidence_text || ''}
+      </p>
+    `;
+
+    const plainText = `${result.suggested_tag}\n${authorLast} ${citationYear}\n${result.evidence_text || ''}`;
+
+    try {
+      const blobHtml = new Blob([html], { type: 'text/html' });
+      const blobText = new Blob([plainText], { type: 'text/plain' });
+      const data = [new ClipboardItem({
+        'text/html': blobHtml,
+        'text/plain': blobText
+      })];
+      await navigator.clipboard.write(data);
+      setCopiedVerbatim(true);
+      setTimeout(() => setCopiedVerbatim(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy rich text:', err);
+      navigator.clipboard.writeText(plainText);
+      setCopiedVerbatim(true);
+      setTimeout(() => setCopiedVerbatim(false), 2000);
+    }
   };
 
 
@@ -147,6 +185,23 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
                 <>
                   <Copy className="h-3 w-3" />
                   <span>Copy Tag & Verdict</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleCopyVerbatim}
+              className="flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 px-2 py-1 rounded transition-colors cursor-pointer select-none interactive-action"
+              title="Copies the card in formatted rich-text direct paste ready for MS Word/Verbatim"
+            >
+              {copiedVerbatim ? (
+                <>
+                  <Check className="h-3 w-3 text-emerald-500" />
+                  <span className="text-emerald-500">Copied Verbatim</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3 w-3" />
+                  <span>Copy Verbatim (.docx)</span>
                 </>
               )}
             </button>

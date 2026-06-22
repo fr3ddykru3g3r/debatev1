@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "CutBase Clipper",
+  "version": "1.0.0",
+  "description": "Evaluate debate evidence quality and extract clean cards with one click.",
+  "permissions": [
+    "sidePanel",
+    "contextMenus",
+    "tabs",
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_title": "Open CutBase Clipper"
+  },
+  "side_panel": {
+    "default_path": "panel.html"
+  }
+}
