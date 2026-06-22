@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const serverUrlInput = document.getElementById("server-url");
   const claimInput = document.getElementById("claim-input");
   const evidencePreview = document.getElementById("evidence-preview");
@@ -20,27 +20,99 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.storage.local.set({ serverUrl: serverUrlInput.value });
   });
 
-  // Fetch pending analysis data
-  const loadSelectionData = async () => {
+  // Fetch selection data or auto-scrape current page
+  const loadSelectionOrPage = async () => {
+    // 1. Check if there is a pending selection from right-click
     const data = await chrome.storage.local.get("pendingAnalysis");
-    if (data.pendingAnalysis) {
+    
+    if (data.pendingAnalysis && (Date.now() - data.pendingAnalysis.timestamp < 10000)) {
+      // If there is a selection from the last 10 seconds, use it
       const selection = data.pendingAnalysis;
       evidencePreview.value = selection.text;
-      authorInput.value = selection.year || "";
+      claimInput.value = selection.title; // Default claim to page title
+      authorInput.value = selection.year || new Date().getFullYear().toString();
       evaluateBtn.disabled = false;
       
-      // Auto-focus claim input to prompt the user
-      claimInput.focus();
+      // Auto trigger evaluation for selection
+      evaluateBtn.click();
+      
+      // Clear selection so it doesn't run again on next reopen
+      await chrome.storage.local.remove("pendingAnalysis");
+    } else {
+      // 2. Otherwise, auto-scrape the text of the active tab
+      await autoScrapeActiveTab();
+    }
+  };
+
+  const autoScrapeActiveTab = async () => {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab) return;
+
+      const pageUrl = tab.url || "";
+      const pageTitle = tab.title || "Web Page Claim";
+
+      claimInput.value = pageTitle;
+      
+      // Parse year from URL or title
+      const yearMatch = pageUrl.match(/\b((?:19|20)\d{2})\b/) || pageTitle.match(/\b((?:19|20)\d{2})\b/);
+      authorInput.value = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
+
+      // Check if URL is an internal chrome page
+      if (pageUrl.startsWith("chrome://") || pageUrl.startsWith("edge://") || pageUrl.startsWith("about:") || pageUrl.startsWith("chrome-extension://")) {
+        evidencePreview.value = "Cannot auto-scrape internal browser page. Navigate to an article and click Evaluate.";
+        evaluateBtn.disabled = true;
+        return;
+      }
+
+      statusDisplay.style.display = "block";
+      statusDisplay.textContent = "Scraping page content...";
+
+      // Inject script to extract page text content (prefers article/main tags)
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          // Remove scripts and style elements from count
+          const clone = document.body.cloneNode(true);
+          const scriptsAndStyles = clone.querySelectorAll("script, style, nav, footer, header");
+          scriptsAndStyles.forEach(el => el.remove());
+
+          const article = clone.querySelector("article");
+          if (article) return article.innerText;
+          
+          const main = clone.querySelector("main");
+          if (main) return main.innerText;
+
+          return clone.innerText || "";
+        }
+      });
+
+      const extractedText = results[0]?.result || "";
+      if (extractedText.trim()) {
+        evidencePreview.value = extractedText.trim();
+        evaluateBtn.disabled = false;
+        statusDisplay.style.display = "none";
+        
+        // Auto trigger evaluation
+        evaluateBtn.click();
+      } else {
+        evidencePreview.value = "No readable text content found on the page.";
+        statusDisplay.style.display = "none";
+      }
+    } catch (err) {
+      console.warn("Could not auto-scrape page content:", err);
+      statusDisplay.style.display = "none";
+      evidencePreview.value = "Unable to auto-scrape this page context. Select text manually, right-click, and select 'Evaluate selection'.";
     }
   };
 
   // Initial load
-  loadSelectionData();
+  loadSelectionOrPage();
 
-  // Listen to runtime messages from service worker
+  // Listen to runtime messages from service worker (reloads on right click)
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === "load_selection") {
-      loadSelectionData();
+      loadSelectionOrPage();
     }
   });
 
