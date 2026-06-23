@@ -21,90 +21,132 @@ const openai = isModelConfigured
 // Mock analysis function for cost-free demo/testing and fallback states
 export function generateMockAnalysis(request: AnalysisRequest): AnalysisModelOutput {
   const claim = request.claimText.toLowerCase();
-  const evidence = (request.evidenceText || request.sourceUrl || '').toLowerCase();
-
-  if (claim.includes('carbon') || evidence.includes('oecd') || evidence.includes('carbon')) {
-    return {
-      source_credibility: 9.2,
-      recency_fit: 9.5,
-      specificity: 8.8,
-      quote_integrity: 8.5,
-      claim_fit: 8.0,
-      attack_risk: 'low',
-      confidence_level: 'high',
-      one_line_verdict: 'Strong, highly credible source with highly specific empirical findings that support the core claim with minor caveats.',
-      strongest_attribute: 'Source credibility',
-      biggest_weakness: 'Claim fit',
-      suggested_tag: 'Carbon border adjustments reduce carbon leakage risks in trade-exposed industrial sectors.',
-      suggested_best_use: 'empirical support',
-      explanations: {
-        source_credibility: 'OECD is a top-tier global research institution providing highly objective macroeconomic analyses.',
-        recency_fit: 'The evidence is from 2024, which represents up-to-date policy research matching the current timeline.',
-        specificity: 'Explicitly names mechanisms (leakage risk) and target areas (emissions-intensive sectors).',
-        quote_integrity: 'The excerpt is well-warranted and includes necessary context without misleading clips.',
-        claim_fit: 'Directly supports the claim, although the source notes that impacts depend on specific sector designs.'
-      }
-    };
-  }
-
-  if (claim.includes('social media') || claim.includes('democracy') || evidence.includes('social-media') || evidence.includes('misinformation')) {
-    return {
-      source_credibility: 7.8,
-      recency_fit: 8.5,
-      specificity: 6.5,
-      quote_integrity: 7.0,
-      claim_fit: 4.5,
-      attack_risk: 'high',
-      confidence_level: 'medium',
-      one_line_verdict: 'Decent source but the claim fit is weak. The tag overclaims the causal connection found in the evidence.',
-      strongest_attribute: 'Source credibility',
-      biggest_weakness: 'Claim fit',
-      suggested_tag: 'Social media misinformation is associated with lower levels of trust in public institutions.',
-      suggested_best_use: 'historical example',
-      explanations: {
-        source_credibility: 'Academic researchers provide solid credibility, though specific institutional backing is unnamed.',
-        recency_fit: 'The research is recent enough, addressing modern platform dynamics.',
-        specificity: 'The findings are relatively abstract, failing to detail specific platform mechanisms.',
-        quote_integrity: 'The quote integrity is decent, but the tag dramatically overstates the warrant present.',
-        claim_fit: 'The evidence only proves a correlation with "lower trust", not a causal relationship leading to "collapse".'
-      }
-    };
-  }
-
   const rawEvidence = request.evidenceText || request.sourceUrl || '';
-  const hasYear = /\b(19|20)\d{2}\b/.test(rawEvidence);
-  const wordCount = rawEvidence.split(/\s+/).length;
+  const evidence = rawEvidence.toLowerCase();
+
+  // 1. Calculate word overlap heuristic (excluding common stopwords)
+  const stopWords = new Set(['the', 'and', 'for', 'with', 'that', 'this', 'from', 'have', 'been', 'were', 'was', 'are', 'but', 'not', 'will', 'would', 'should', 'could', 'about', 'their', 'there', 'then', 'them', 'they', 'your', 'what', 'some', 'into', 'over']);
+  
+  const claimWords = claim.split(/[^a-zA-Z0-9]+/).filter(w => w.length > 3 && !stopWords.has(w));
+  const uniqueClaimWords = Array.from(new Set(claimWords));
+  
+  let matchCount = 0;
+  for (const word of uniqueClaimWords) {
+    if (evidence.includes(word)) {
+      matchCount++;
+    }
+  }
+  
+  const overlapRatio = uniqueClaimWords.length > 0 ? matchCount / uniqueClaimWords.length : 1.0;
+
+  // 2. Detect absolute overclaiming qualifiers in claim vs evidence
+  const absoluteQualifiers = ['always', 'entirely', 'completely', 'solves', 'eliminates', 'never', 'guarantees', 'inevitably', 'perfectly', 'instant', 'instantly', 'fully', 'permanent', 'permanently'];
+  const claimAbsolutes = absoluteQualifiers.filter(q => claim.includes(q));
+  const evidenceAbsolutes = absoluteQualifiers.filter(q => evidence.includes(q));
+  
+  // Claim is an overclaim if it asserts an absolute that isn't supported by the evidence text
+  const isOverclaim = claimAbsolutes.some(q => !evidenceAbsolutes.includes(q));
+
+  // 3. Compute dynamic rubric parameters
+  // Source Credibility (7.0 - 9.5)
+  let source_credibility = 7.0;
+  if (request.authorName) source_credibility += 1.0;
+  if (request.publicationName) source_credibility += 1.5;
+  source_credibility = Math.min(10.0, source_credibility);
+
+  // Recency Fit (6.0 - 9.5)
+  const hasYear = /\b(19|20)\d{2}\b/.test(rawEvidence) || request.publishedAt;
+  let recency_fit = 7.0;
+  if (hasYear) {
+    recency_fit = 9.0;
+    const dateStr = request.publishedAt || rawEvidence;
+    if (dateStr.includes('2024') || dateStr.includes('2023') || dateStr.includes('2025') || dateStr.includes('2026')) {
+      recency_fit = 9.5;
+    }
+  } else {
+    recency_fit = 6.0;
+  }
+
+  // Specificity & Quote Integrity based on word count
+  const wordCount = rawEvidence.split(/\s+/).filter(Boolean).length;
   const isShort = wordCount < 40;
+  
+  let specificity = 8.0;
+  if (wordCount > 100) specificity = 9.0;
+  else if (wordCount < 30) specificity = 5.0;
+
+  let quote_integrity = 8.0;
+  if (wordCount > 60) quote_integrity = 9.0;
+  else if (wordCount < 30) quote_integrity = 4.0;
+
+  // Claim Fit (scaled dynamically on word overlap)
+  let claim_fit = 6.0;
+  if (overlapRatio > 0.8) {
+    claim_fit = 9.5;
+  } else if (overlapRatio > 0.6) {
+    claim_fit = 8.5;
+  } else if (overlapRatio > 0.4) {
+    claim_fit = 7.5;
+  } else {
+    claim_fit = 5.0;
+  }
+
+  // Apply overclaiming penalties
+  let attack_risk: 'low' | 'medium' | 'high' = 'low';
+  if (isOverclaim) {
+    claim_fit = Math.max(2.0, claim_fit - 4.5);
+    attack_risk = 'high';
+  } else if (isShort) {
+    attack_risk = 'medium';
+    claim_fit = Math.max(3.0, claim_fit - 2.0);
+  } else if (overlapRatio < 0.5) {
+    attack_risk = 'medium';
+  }
+
+  const confidence_level = (request.authorName && hasYear && !isShort) ? 'high' : 'medium';
+
+  // Build helpful verdicts and explanations
+  let verdict = '';
+  if (isOverclaim) {
+    verdict = 'Claim overreaches. The evidence uses qualifiers while the tag asserts an absolute guarantee.';
+  } else if (overlapRatio > 0.7) {
+    verdict = 'Strong alignment. The claim accurately represents the central thesis and scope of the source text.';
+  } else {
+    verdict = 'Moderate alignment. The source is relevant, but the tag could capture the evidence context more precisely.';
+  }
+
+  const strongest_attribute = claim_fit >= source_credibility ? 'Claim fit' : 'Source credibility';
+  const biggest_weakness = isOverclaim ? 'Claim fit' : (isShort ? 'Quote integrity' : 'Recency fit');
 
   return {
-    source_credibility: request.authorName ? 7.5 : 5.0,
-    recency_fit: hasYear ? 8.0 : 4.0,
-    specificity: isShort ? 4.5 : 7.0,
-    quote_integrity: isShort ? 3.5 : 7.5,
-    claim_fit: 6.0,
-    attack_risk: isShort ? 'high' : 'medium',
-    confidence_level: request.authorName && hasYear ? 'high' : 'medium',
-    one_line_verdict: isShort 
-      ? 'Under-warranted card. The text is too short to establish a reliable argument or citation context.'
-      : 'Moderate quality evidence with a standard fit, requiring some qualifiers in the debate tag.',
-    strongest_attribute: 'Specificity',
-    biggest_weakness: isShort ? 'Quote integrity' : 'Recency fit',
+    source_credibility,
+    recency_fit,
+    specificity,
+    quote_integrity,
+    claim_fit,
+    attack_risk,
+    confidence_level,
+    one_line_verdict: verdict,
+    strongest_attribute,
+    biggest_weakness,
     suggested_tag: request.claimText ? `Evidence indicates that ${request.claimText.replace(/^[Tt]his\s/, '')} in limited contexts.` : 'Suggested debate tag.',
     suggested_best_use: 'empirical support',
     explanations: {
       source_credibility: request.authorName 
-        ? `Author ${request.authorName} is specified, providing a basic credibility reference.`
-        : 'No author metadata was detected or provided, reducing verification authority.',
+        ? `Author ${request.authorName} and citation metadata establish solid source authority.`
+        : 'Basic source details provided, but lacking detailed institutional review indicators.',
       recency_fit: hasYear
-        ? 'Dating shows the evidence is contextually active.'
-        : 'No year was found in the source citation, raising recency concerns.',
+        ? 'Dating matches active research timelines for this topic.'
+        : 'No specific year found in citation, posing moderate recency verification risks.',
       specificity: isShort
-        ? 'The evidence text is extremely short and lacks concrete mechanisms.'
-        : 'The evidence details some causal pathways and specific findings.',
+        ? 'The excerpt is short and lacks detailed structural mechanisms.'
+        : 'The source documents explicit mechanisms, data points, or localized parameters.',
       quote_integrity: isShort
-        ? 'Heavy clipping detected; the quote does not contain a full academic warrant.'
-        : 'The quote is contiguous and contains sufficient context for analysis.',
-      claim_fit: 'The evidence matches the general theme but fails to support a universal guarantee.'
+        ? 'Text is highly condensed, which may omit critical context or qualifications.'
+        : 'The excerpt provides sufficient surrounding context for objective review.',
+      claim_fit: isOverclaim
+        ? 'The tag overclaims by asserting an absolute causal impact not supported by the evidence.'
+        : 'The thematic overlap is strong and accurately mirrors the degree of assertion in the source.'
     }
   };
 }

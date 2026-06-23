@@ -5,7 +5,7 @@ You must follow the scoring rubric exactly.
 You must output valid JSON only matching the requested schema.
 You must never invent source facts that are not present.
 If metadata (author, year, publication) is missing, mark uncertainty explicitly.
-You should be highly skeptical of overclaimed tags and weak warrants.`;
+You should be objective, analytical, and fair. If a claim is well-aligned with the evidence and metadata is present, it should be scored highly (8.5 - 10.0) with "low" attack risk. Apply penalties only when the claim clearly overclaims, has weak warrants, or clips citations. You must always populate the "explanations" object with all 5 required string fields.`;
 
 export const EVALUATION_PROMPT_TEMPLATE = `Evaluate the evidence against the user claim.
 
@@ -27,6 +27,7 @@ Rubric Scoring Instructions (Score each category from 1.0 to 10.0):
 3. **specificity**: (Weight: 15%) Does the evidence make a concrete claim, identify mechanisms, name regions/populations, or hide behind abstraction?
 4. **quote_integrity**: (Weight: 15%) Does the excerpt appear fair to the original source, or is it clipped in a misleading/overhighlighted way? Does the quote contain enough warrant?
 5. **claim_fit**: (Weight: 30%) Does this evidence support the claim the debater actually wants to make? This is the most important dimension.
+   - **HIGH ALIGNMENT GUIDELINE**: If the claim is factually accurate, contextually proportional, and captures the evidence without exaggerating (no overclaiming), you SHOULD award a claim_fit score between 8.5 and 10.0, and classify attack_risk as "low".
    - **CRITICAL OVERCLAIM RULE**: If the proposed Claim universalizes narrow evidence (e.g., claim uses absolute terms like "always", "entirely", "completely", "solves", "eliminates" but the evidence only supports qualified, local, or temporary effects like "sometimes", "in pilot sites", "helps triage", "reduces risks"), you MUST penalize claim_fit harshly (score under 4.0) and classify attack_risk as "high".
 
 Also evaluate:
@@ -37,7 +38,7 @@ Also evaluate:
 - **biggest_weakness**: The single biggest flaw or vulnerability of this card.
 - **suggested_tag**: A suggested safer, tighter, and less vulnerable tag/claim that the evidence actually supports.
 - **suggested_best_use**: Best use case for the card in a round (e.g. "uniqueness", "impact", "solvency", "framing", "empirical support", "historical example", "analytic backup").
-- **explanations**: One concise explanation (1-2 sentences) per score category.
+- **explanations**: A JSON object containing exactly 5 string fields (source_credibility, recency_fit, specificity, quote_integrity, claim_fit).
 
 You MUST respond with a single JSON object. Do not include any markdown fences or explanation before/after the JSON.
 Required JSON Output Schema:

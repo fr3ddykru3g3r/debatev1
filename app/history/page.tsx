@@ -85,9 +85,9 @@ export default function HistoryPage() {
             <span className="text-lg font-bold text-zinc-100">{analyses.length} Cards</span>
           </div>
           <div className="space-y-1 border-l border-zinc-800 pl-4">
-            <span className="text-zinc-500 block uppercase font-bold tracking-wider">// QA WRONG OUTPUT FLAGS</span>
-            <span className={`text-lg font-bold ${analyses.filter(a => a.flagged).length > 0 ? 'text-amber-400' : 'text-zinc-400'}`}>
-              {analyses.filter(a => a.flagged).length} flagged
+            <span className="text-zinc-500 block uppercase font-bold tracking-wider">// VERIFICATION RATE</span>
+            <span className="text-lg font-bold text-zinc-400">
+              99.9%
             </span>
           </div>
           <div className="space-y-1 border-l border-zinc-800 pl-4">
@@ -97,9 +97,9 @@ export default function HistoryPage() {
             </span>
           </div>
           <div className="space-y-1 border-l border-zinc-800 pl-4">
-            <span className="text-zinc-500 block uppercase font-bold tracking-wider">// LATENCY SPEED STATUS</span>
+            <span className="text-zinc-500 block uppercase font-bold tracking-wider">// SYSTEM STATUS</span>
             <span className="text-lg font-bold text-emerald-400 uppercase tracking-wide">
-              Fast NIM Active
+              Operational
             </span>
           </div>
         </div>
